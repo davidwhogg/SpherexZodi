@@ -1,0 +1,64 @@
+\documentclass{article}
+\usepackage[letterpaper, textwidth=5.5in, textheight=9.0in]{geometry}
+\usepackage{setspace}
+\usepackage{amsmath}
+
+% typesetting choices
+\linespread{1.08}
+\frenchspacing
+
+% math macros
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\title{\bfseries%
+The zodiacal light in {\slshape SPHEREx}:\\ A causal, geometric separation} 
+\author{dwh2 }
+\date{September 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}\noindent
+    All-sky, time-domain surveys gather intensity measurements that comprise observatory, Solar System, Milky Way, and extragalactic contributions.
+    Many projects would benefit from a ``component separation'' that splits the intensity into these additive components.
+    Here we perform one of these separations, under the assumption that the zodiacal light is approximately constant in a frame that rotates around the Solar System with Jupiter, and that all of the other components are approximately constant in either spacecraft coordinates or else celestial coordinates.
+    Our implementation makes use of some of the ideas from the theory of invariant functions, and some ideas from causal inference.
+\end{abstract}
+
+\section{Assumptions and choices}
+
+\begin{description}
+    \item[geometry:] We assume that the zodi is approximately time invariant in a frame that rotates with Jupiter's orbit.
+    In detail, our assumption is slightly weaker:
+    We assume that the intensity from the zodi is an invariant scalar function of four vectors.
+    The four vectors are the direction $\vec{\hat{n}}$ of the observation (or from which the photons are arriving), the barycentric displacement $\vec{r}$ of the \textsl{SPHEREx} instrument in the quasi-Newtonian Solar System frame, the barycentric displacement $\vec{r}_\text{J}$ of Jupiter in that frame, and a normal vector $\vec{\hat{z}}$ that is parallel to the total angular momentum of the zodi dust.
+    This assumption is not the assumption that the zodi is rotationally invariant; it is the assumption that if you rotate all four vectors, the intensity you measure rotates in the corresponding way.
+    
+    In the theory of invariant functions, this further corresponds to the assumption that the zodi can be expressed as a function only of the inner products of these vectors with themselves and each other.
+    Since two of the vectors are unit vectors, the only nontrivial inner products are
+    \begin{align}
+        x^\top = \begin{bmatrix}\vec{\hat{n}} \cdot \vec{r} &
+        \vec{\hat{n}} \cdot \vec{r}_\text{J} &
+        \vec{\hat{n}} \cdot \vec{\hat{z}} &
+        \vec{r} \cdot \vec{r} &
+        \vec{r} \cdot \vec{r}_\text{J} &
+        \vec{r} \cdot \vec{\hat{z}} &
+        \vec{r}_\text{J} \cdot \vec{r}_\text{J} &
+        \vec{r}_\text{J} \cdot \vec{\hat{z}} \end{bmatrix} ~,
+    \end{align}
+    where $x$ is a column vector of explicitly scalar features, which encode everything possible about a time-invariant zodi that depends only on Jupiter, the Sun, and the \textsl{SPHEREx} point of view.
+
+    There will be two other components of the intensity field.
+    One of these is the spacecraft component.
+    This will be a scalar function of the direction vector $\vec{\hat{n}}$, the barycentric displacement $\vec{r}$ of the spacecraft, a spacecraft pole vector HOGG and the displacement HOGG WHAT.
+
+    The other component is the combined astronomical component, which absorbs all the stars, interstellar medium, galaxies, quasars, and everything else outside the Solar System.
+    
+
+    HOGG WHAT ARE WE GIVING UP WITH THESE ASSUMPTIONS?
+
+    \item[non-negativity:] foo
+\end{description}
+
+\end{document}
