@@ -1,0 +1,6 @@
+.ipynb*
+*.aux
+*.log
+*.blg
+*.bbl
+*~
