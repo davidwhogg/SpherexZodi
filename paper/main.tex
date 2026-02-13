@@ -12,15 +12,15 @@
 
 \title{\bfseries%
 The zodiacal light in {\slshape SPHEREx}:\\ A causal, geometric separation} 
-\author{dwh2 }
-\date{September 2025}
+\author{Saydjari \and Hogg \and Villar}
+\date{December 2025}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}\noindent
-    All-sky, time-domain surveys gather intensity measurements that comprise observatory, Solar System, Milky Way, and extragalactic contributions.
+    All-sky, time-domain surveys gather intensity measurements that comprise observatory, Earth's atmosphere, Solar System, Milky Way, and extragalactic contributions.
     Many projects would benefit from a ``component separation'' that splits the intensity into these additive components.
     Here we perform one of these separations, under the assumption that the zodiacal light is approximately constant in a frame that rotates around the Solar System with Jupiter, and that everything else is approximately constant in celestial coordinates.
     Our implementation makes use of some of the ideas from the theory of invariant functions, and some ideas from causal inference.
@@ -29,36 +29,80 @@ The zodiacal light in {\slshape SPHEREx}:\\ A causal, geometric separation}
 \section{Assumptions and choices}
 
 \begin{description}
-    \item[zodi geometry:] We assume that the zodi is approximately time invariant in a frame that rotates with Jupiter's orbit.
-    In detail, our assumption is slightly weaker:
-    We assume that the intensity from the zodi is an invariant scalar function of four vectors.
-    The four vectors are the direction $\vec{\hat{n}}$ of the observation (or from which the photons are arriving), the barycentric displacement $\vec{r}$ of the \textsl{SPHEREx} instrument in the quasi-Newtonian Solar System frame, the barycentric displacement $\vec{r}_\text{J}$ of Jupiter in that frame, and a normal vector $\vec{\hat{z}}$ that is parallel to the total angular momentum of the zodi dust.
-    This assumption is not the assumption that the zodi is rotationally invariant; it is the assumption that if you rotate all four vectors, the intensity you measure rotates in the corresponding way.
-    
-    In the theory of invariant functions, this further corresponds to the assumption that the zodi can be expressed as a function only of the inner products of these vectors with themselves and each other.
-    Since two of the vectors are unit vectors, the only nontrivial inner products are
-    \begin{align}
-        x^\top = \begin{bmatrix}\vec{\hat{n}} \cdot \vec{r} &
-        \vec{\hat{n}} \cdot \vec{r}_\text{J} &
-        \vec{\hat{n}} \cdot \vec{\hat{z}} &
-        \vec{r} \cdot \vec{r} &
-        \vec{r} \cdot \vec{r}_\text{J} &
-        \vec{r} \cdot \vec{\hat{z}} &
-        \vec{r}_\text{J} \cdot \vec{r}_\text{J} &
-        \vec{r}_\text{J} \cdot \vec{\hat{z}} \end{bmatrix} ~,
-    \end{align}
-    where $x$ is a column vector of explicitly scalar features, which encode everything possible about a time-invariant zodi that depends only on Jupiter, the Sun, and the \textsl{SPHEREx} point of view.
+    \item[coordinate system:]
+    The whole goal of this problem is to make a completely coordinate-free model of the Zodi.
+    To be completely coordinate-free, we need to be invariant to O(3) (all coordinate rotations and flips), and also to all translations.
+    When we loosely speak of the ``position'' of the spacecraft $\vec{S}$ (say) or jupiter $\vec{J}$, we mean \emph{position relative to the Solar System Barycenter}.
+    If you want a truly coordinate-free description, replace every position like $\vec{S}$ with an explicit difference $(\vec{S}-\vec{B})$, where $\vec{B}$ is the position of the Barycenter, and every velocity direction $\vec{\hat{v}}_x$ with the explicit normalized difference $(\vec{v}_x-\vec{v}_B)/|\vec{v}_x-\vec{v}_B|$, where $\vec{v}_B$ is the velocity of the Barycenter.
+    Once that change is made, no coordinate choice (provided that it is inertial) makes any difference to the model that follows.
 
-    \item[spacecraft geometry:]
+    \item[hierarchical zodi model:]
+    The fundamental assumption is that the zodi is a disk aligned with the Solar System planets.
+    To be specific, we will assume that the zodi disk has a normal vector $\vec{\hat{z}}$ that is aligned with the angular momentum vector of the Solar System.
+    That said, we are not going to model it as a three-dimensional disk in space, but rather as an effective model, based on spacecraft position $\vec{S}$, telescope pointing $\vec{\hat{n}}$, and time.
+    And even time will be represented by the positions of the relevant planets.
+    We will assume, to zeroth order, that the zodi is a uniform and symmetric disk, symmetric in both vertical and azimuthal structure.
+    To next order, the zodi will have effects (over- and under-densities) driven by the position $\vec{J}$ and velocity direction $\vec{\hat{v}}_J$ of Jupiter, because it is massive, and the position $\vec{E}$ and velocity direction $\vec{\hat{v}}_E$ of Earth, because it is near to the spacecraft.
+    
+    \item[geometry at zeroth order:]
+    At zeroth order, the zodi model can only depend on the disk orientation vector $\vec{\hat{z}}$,
+    the position $\vec{S}$ of the spacecraft,
+    and the direction $\vec{\hat{n}}$ in which the telescope is pointed.
+    The zodi, at any wavelength $\lambda$, is a scalar intensity $I_\lambda$ that depends on these vectors.
+    We have a theory of scalar functions of vectors \cite{scalars}; it recommends first forming all possible invariant scalar products (inner products or dot products), and then building the model from those invariant scalars.
+    True scalars are somewhat non-trivial in this case however, because the orientation vector $\vec{\hat{z}}$ is actually a \emph{pseudovector}, such that there are parity issues.
+    For example, $\vec{\hat{z}}\cdot\vec{S}$ is not strictly a scalar, but $(\vec{\hat{z}}\times\vec{S})\cdot\vec{\hat{n}}$ is,
+    as is $(\vec{\hat{z}}\cdot\vec{S})\,(\vec{\hat{z}}\cdot\vec{\hat{n}})$, where the first undoes the bad parity with a cross product, and the second undoes it by squaring the parity away.
+    Since our zeroth order assumption is that the disk is symmetric vertically, we seek only functions that are even in the vector $\vec{\hat{z}}$; thus the complete set of available scalars from these three vector inputs is
+    \begin{align}
+        x_0^\top = \begin{bmatrix}
+        \vec{\hat{n}} \cdot \vec{S} &
+        \vec{S} \cdot \vec{S} &
+        (\vec{\hat{z}} \cdot \vec{\hat{n}})^2 &
+        (\vec{\hat{z}} \cdot \vec{\hat{n}})\,(\vec{\hat{z}} \cdot \vec{S}) &
+        (\vec{\hat{z}} \cdot \vec{S})^2
+        \end{bmatrix} ~.
+    \end{align}
+    HOGG notes: SOLEDAD says that we should state precisely, in transformation language, what we want to be true of our function, and then the scalars will flow from that. HOGG says that, after discusing with Soledad, he is feeling pretty confident that dropping the cross-product scalars is correct. But definitely we should still go through the exercise that Soledad recommends.
+
+    \item[geometry at first order:] HOGG conjectures the following:
+    If we want to account for the perturbation from the Earth (or Earth--Moon system) we include a position $\vec{E}$ for the Earth (or maybe the Earth--Moon Barycenter) and the velocity direction $\vec{\hat{v}}_E$ of the Earth, and then the Earth-perturbation model is based on the scalars
+    \begin{align}
+        x_E^\top = \begin{bmatrix}
+        \vec{\hat{n}} \cdot \vec{E} &
+        \vec{\hat{n}} \cdot \vec{\hat{v}}_E &
+        \vec{E} \cdot \vec{E} &
+        \vec{E} \cdot \vec{S} &
+        \vec{\hat{v}}_E \cdot \vec{S}
+        \end{bmatrix} ~.
+    \end{align}
+    For numerical stability (since $\vec{E}$ and $\vec{S}$ are very similar), we might want to replace $\vec{E}$ in all the scalars above with the difference $(\vec{E}-\vec{S})$, which is the Earth-spacecraft displacement.
+    Similarly, if we want to account for the perturbation from Jupiter, we include the position $\vec{J}$ and velocity direction $\vec{\hat{v}}_J$ of Jupiter and the scalars are
+    \begin{align}
+        x_J^\top = \begin{bmatrix}
+        \vec{\hat{n}} \cdot \vec{J} &
+        \vec{\hat{n}} \cdot \vec{\hat{v}}_J &
+        \vec{J} \cdot \vec{J} &
+        \vec{J} \cdot \vec{S} &
+        \vec{\hat{v}}_J \cdot \vec{S}
+        \end{bmatrix} ~.
+    \end{align}
+    It's possible we'd get away with using $\vec{\hat{J}}=\vec{J}/|\vec{J}|$ instead of $\vec{J}$ and then we'd lose the $\vec{J}\cdot\vec{J}$ input.
+    It's possible that we also need $\vec{\hat{z}}$ terms, but Hogg conjectures that we don't. If we do need those terms, there are a lot of them. It's possible that we also need $\vec{S}\cdot\vec{S}$ terms but Hogg conjectures that we don't.
+    These first-order models assumes that perturbations to the zeroth-order model rigidly follow (or lead) the Earth and Jupiter, respectively.
+
+    HOGG CONJECTURES THE FOLLOWING: The first-order models should be given one more scalar, which is the \emph{prediction} of the zeroth order model. That way, these perturbations can be sensitive to what they are perturbing!
+
+    \item[spacecraft geometry:] HOGG NEEDS TO WRITE THIS...
     There will be two other components of the intensity field.
     One of these is the spacecraft component.
-    This will be a scalar function of the direction vector $\vec{\hat{n}}$, the barycentric displacement $\vec{r}$ of the spacecraft, a spacecraft pole vector HOGG and the displacement HOGG WHAT.
+    This will be a scalar function of the direction vector $\vec{\hat{n}}$, the barycentric displacement $\vec{S}$ of the spacecraft, a spacecraft pole vector HOGG and the displacement HOGG WHAT.
 
     \item[extra-Solar sky geometry:]
     The other component is the combined astronomical component, which absorbs all the stars, interstellar medium, galaxies, quasars, and everything else outside the Solar System.
     
 
-    HOGG WHAT ARE WE GIVING UP WITH THESE ASSUMPTIONS?
+    HOGG ASKS: WHAT ARE WE GIVING UP WITH THESE ASSUMPTIONS?
 
     \item[non-negativity:] foo
 \end{description}
